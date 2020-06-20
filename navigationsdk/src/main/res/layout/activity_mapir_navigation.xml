@@ -1,60 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:mapbox="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_rll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MapirNavigationActivity">
+    tools:context="ir.map.navigationsdk.MapirNavigationActivity">
 
-    <ir.map.sdk_map.maps.MapView
-        android:id="@+id/map_view"
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/main_cdl"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        mapbox:layout_constraintBottom_toBottomOf="parent"
-        mapbox:layout_constraintEnd_toEndOf="parent"
-        mapbox:layout_constraintStart_toStartOf="parent"
-        mapbox:layout_constraintTop_toTopOf="parent"
-        mapbox:mapbox_cameraZoomMax="20"
-        mapbox:mapbox_cameraZoomMin="1" />
+        android:layout_height="match_parent">
 
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/back_to_route_lnl"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:background="@drawable/rounded_background"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center"
-        android:paddingTop="4dp"
-        android:paddingEnd="8dp"
-        android:paddingRight="8dp"
-        android:paddingBottom="4dp"
-        android:visibility="gone"
-        mapbox:layout_constraintStart_toStartOf="parent"
-        mapbox:layout_constraintTop_toTopOf="parent">
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/main_ctl"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/back_to_route_img"
-            android:layout_width="wrap_content"
+            <ir.map.sdk_map.maps.MapView
+                android:id="@+id/map_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                mapbox:layout_constraintBottom_toBottomOf="parent"
+                mapbox:layout_constraintEnd_toEndOf="parent"
+                mapbox:layout_constraintStart_toStartOf="parent"
+                mapbox:layout_constraintTop_toTopOf="parent"
+                mapbox:mapbox_cameraZoomMax="20"
+                mapbox:mapbox_cameraZoomMin="1" />
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/back_to_route_lnl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:background="@drawable/rounded_background"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:paddingTop="4dp"
+                android:paddingEnd="8dp"
+                android:paddingRight="8dp"
+                android:paddingBottom="4dp"
+                android:visibility="gone"
+                mapbox:layout_constraintStart_toStartOf="parent"
+                mapbox:layout_constraintTop_toTopOf="parent">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/back_to_route_img"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginRight="8dp"
+                    android:src="@drawable/ic_navigation" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/back_to_route_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginRight="8dp"
+                    android:background="#00000000"
+                    android:text="بازگشت به مسیر"
+                    android:textColor="#fff"
+                    android:textSize="18sp" />
+
+            </androidx.appcompat.widget.LinearLayoutCompat>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <LinearLayout
+            android:id="@+id/bottom_sheet_lnl"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginRight="8dp"
-            android:src="@drawable/ic_navigation" />
+            android:orientation="vertical"
+            app:behavior_hideable="false"
+            app:behavior_peekHeight="100dp"
+            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/back_to_route_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_marginRight="8dp"
-            android:background="#00000000"
-            android:text="بازگشت به مسیر"
-            android:textColor="#fff"
-            android:textSize="18sp" />
+            <androidx.core.widget.NestedScrollView
+                android:id="@+id/bottom_fragment_container_nsv_main"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:overScrollMode="always"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent">
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+                <RelativeLayout
+                    android:id="@+id/bottom_fragment_container_nsv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="250dp"
+                        android:background="#fff"
+                        android:gravity="center"
+                        android:text="iran"
+                        android:textColor="#000"
+                        android:textSize="32sp" />
+
+                </RelativeLayout>
+
+            </androidx.core.widget.NestedScrollView>
+
+        </LinearLayout>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+</RelativeLayout>

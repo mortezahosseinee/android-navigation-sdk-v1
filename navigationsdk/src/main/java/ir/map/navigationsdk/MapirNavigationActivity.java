@@ -13,6 +13,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -22,6 +23,7 @@ import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.core.app.ActivityCompat;
 
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.gson.Gson;
 import com.mapbox.android.core.location.LocationEngine;
 import com.mapbox.android.core.location.LocationEngineCallback;
@@ -114,10 +116,19 @@ public class MapirNavigationActivity extends AppCompatActivity implements Mapbox
     private AppCompatButton backToRouteBtn;
     private AppCompatImageView backToRouteImg;
 
+    private LinearLayout bottomSheet;
+    private BottomSheetBehavior bottomSheetBehavior;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mapir_navigation);
+
+        bottomSheet = findViewById(R.id.bottom_sheet_lnl);
+        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+
+//        bottomSheetBehavior.get
 
         backToRouteLnl = findViewById(R.id.back_to_route_lnl);
         backToRouteBtn = findViewById(R.id.back_to_route_btn);

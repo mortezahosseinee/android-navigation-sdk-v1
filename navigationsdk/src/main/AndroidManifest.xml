@@ -6,7 +6,9 @@
 
     <application>
 
-        <activity android:name=".MapirNavigationActivity" />
+        <activity
+            android:name=".MapirNavigationActivity"
+            android:theme="@style/AppTheme" />
 
     </application>
 
