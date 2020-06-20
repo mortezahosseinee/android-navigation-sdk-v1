@@ -6,30 +6,16 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import ir.map.navigationsdk.MapNavigation;
-import ir.map.servicesdk.MapService;
-import ir.map.servicesdk.ResponseListener;
-import ir.map.servicesdk.enums.RouteOverView;
-import ir.map.servicesdk.enums.RouteType;
-import ir.map.servicesdk.model.base.MapirError;
-import ir.map.servicesdk.request.RouteRequest;
-import ir.map.servicesdk.response.RouteResponse;
+import ir.map.navigationsdk.ResponseListener;
+import ir.map.navigationsdk.RouteRequest;
+import ir.map.navigationsdk.model.RouteResponse;
+import ir.map.navigationsdk.model.base.MapirError;
+import ir.map.navigationsdk.model.enums.RouteOverView;
+import ir.map.navigationsdk.model.enums.RouteType;
 
 public class MainActivity extends AppCompatActivity {
 
-//    MapboxMap map;
-//    Style mapStyle;
-//    MapView mapView;
-
-    // variables for adding location layer
-//    private PermissionsManager permissionsManager;
-//    private LocationComponent locationComponent;
-//
-//    private DirectionsRoute selectedRoute;
-//
-//    LatLng destination = new LatLng(35.743168, 51.388636);
-
     private MapNavigation mapNavigation = new MapNavigation();
-    private MapService mapService = new MapService();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,8 +33,7 @@ public class MainActivity extends AppCompatActivity {
                 .routeOverView(RouteOverView.FULL)
                 .build();
 
-        MapService mapService = new MapService();
-        mapService.route(requestBody, new ResponseListener<RouteResponse>() {
+        mapNavigation.route(requestBody, new ResponseListener<RouteResponse>() {
             @Override
             public void onSuccess(RouteResponse response) {
                 Toast.makeText(MainActivity.this, "پاسخ مسیریابی دریافت شد", Toast.LENGTH_SHORT).show();

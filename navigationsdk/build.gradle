@@ -61,9 +61,6 @@ dependencies {
 
     implementation 'ir.map:map-sdk:4.0.0'
 
-    api 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
-    implementation 'ir.map.servicesdk:service-sdk:4.0.1'
-
     implementation 'com.google.code.gson:gson:2.8.6'
 
     implementation 'com.mapbox.mapboxsdk:mapbox-sdk-turf:5.2.1'

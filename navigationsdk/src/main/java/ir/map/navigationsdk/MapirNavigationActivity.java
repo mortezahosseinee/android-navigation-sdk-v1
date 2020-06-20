@@ -157,13 +157,6 @@ public class MapirNavigationActivity extends AppCompatActivity {
         LineManager lineManager = new LineManager(mapView, map, mapStyle);
         LineString routeLine = LineString.fromPolyline(geometry, 5);
 
-//        LineOptions lineOptions = new LineOptions()
-//                .withGeometry(routeLine)
-//                .withLineColor("#66b2ff")
-//                .withLineGapWidth(8f)
-//                .withLineWidth(15f);
-//        lineManager.create(lineOptions);
-
         List<Point> coordinates = new ArrayList<>();
         for (int i = 1; i < TurfMeasurement.distance(routeLine.coordinates().get(0), routeLine.coordinates().get(routeLine.coordinates().size() - 1)) * 1000; i++)
             coordinates.add(TurfMeasurement.along(routeLine, i, UNIT_METRES));
