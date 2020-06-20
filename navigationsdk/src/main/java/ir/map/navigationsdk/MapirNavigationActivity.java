@@ -1,18 +1,26 @@
 package ir.map.navigationsdk;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatButton;
+import androidx.appcompat.widget.AppCompatImageView;
+import androidx.appcompat.widget.LinearLayoutCompat;
+import androidx.core.app.ActivityCompat;
 
 import com.google.gson.Gson;
 import com.mapbox.android.core.location.LocationEngine;
@@ -32,16 +40,15 @@ import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.location.LocationComponent;
 import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions;
 import com.mapbox.mapboxsdk.location.LocationComponentOptions;
-import com.mapbox.mapboxsdk.location.OnLocationClickListener;
 import com.mapbox.mapboxsdk.location.modes.CameraMode;
 import com.mapbox.mapboxsdk.location.modes.RenderMode;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
-import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
-import com.mapbox.mapboxsdk.plugins.annotation.LineManager;
 import com.mapbox.mapboxsdk.style.layers.BackgroundLayer;
 import com.mapbox.mapboxsdk.style.layers.CircleLayer;
+import com.mapbox.mapboxsdk.style.layers.Layer;
 import com.mapbox.mapboxsdk.style.layers.LineLayer;
+import com.mapbox.mapboxsdk.style.layers.Property;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
@@ -78,10 +85,10 @@ import static com.mapbox.turf.TurfConstants.UNIT_METRES;
 import static ir.map.navigationsdk.HttpUtils.createError;
 import static ir.map.navigationsdk.HttpUtils.createResponse;
 
-public class MapirNavigationActivity extends AppCompatActivity {
+public class MapirNavigationActivity extends AppCompatActivity implements MapboxMap.OnCameraMoveStartedListener {
 
     //region Initialize
-    private OkHttpClient client = new OkHttpClient();
+    private final OkHttpClient client = new OkHttpClient();
     //endregion Initialize
 
     MapboxMap map;
@@ -94,18 +101,65 @@ public class MapirNavigationActivity extends AppCompatActivity {
 
     private LocationComponent locationComponent = null;
     private LocationEngine locationEngine;
-    private long DEFAULT_INTERVAL_IN_MILLISECONDS = 1000L;
-    private long DEFAULT_MAX_WAIT_TIME = DEFAULT_INTERVAL_IN_MILLISECONDS * 5;
-    private MapirNavigationActivityLocationCallback callback = new MapirNavigationActivityLocationCallback(this);
+    private final MapirNavigationActivityLocationCallback callback = new MapirNavigationActivityLocationCallback(this);
 
     private Point firstLastPoint = null;
     private Point secondLastPoint = null;
     private double bearing = 0;
 
+    private boolean routeTracking = true;
+    private boolean changeRouteTracking = false;
+
+    private LinearLayoutCompat backToRouteLnl;
+    private AppCompatButton backToRouteBtn;
+    private AppCompatImageView backToRouteImg;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mapir_navigation);
+
+        backToRouteLnl = findViewById(R.id.back_to_route_lnl);
+        backToRouteBtn = findViewById(R.id.back_to_route_btn);
+        backToRouteImg = findViewById(R.id.back_to_route_img);
+
+        backToRouteBtn.setTypeface(Typeface.createFromAsset(getAssets(), "iransans_fa.ttf"));
+        backToRouteLnl.setOnClickListener(v -> map.animateCamera(CameraUpdateFactory.newLatLngZoom(origin, 20), 2500, new MapboxMap.CancelableCallback() {
+            @Override
+            public void onCancel() {
+            }
+
+            @Override
+            public void onFinish() {
+                routeTracking = true;
+                changeRouteTracking = true;
+                backToRouteLnl.setVisibility(View.GONE);
+            }
+        }));
+        backToRouteBtn.setOnClickListener(v -> map.animateCamera(CameraUpdateFactory.newLatLngZoom(origin, 20), 2500, new MapboxMap.CancelableCallback() {
+            @Override
+            public void onCancel() {
+            }
+
+            @Override
+            public void onFinish() {
+                routeTracking = true;
+                changeRouteTracking = true;
+                backToRouteLnl.setVisibility(View.GONE);
+            }
+        }));
+        backToRouteImg.setOnClickListener(v -> map.animateCamera(CameraUpdateFactory.newLatLngZoom(origin, 20), 2500, new MapboxMap.CancelableCallback() {
+            @Override
+            public void onCancel() {
+            }
+
+            @Override
+            public void onFinish() {
+                routeTracking = true;
+                changeRouteTracking = true;
+                backToRouteLnl.setVisibility(View.GONE);
+            }
+        }));
 
         try {
             this.getSupportActionBar().hide();
@@ -120,28 +174,25 @@ public class MapirNavigationActivity extends AppCompatActivity {
         mapView = findViewById(R.id.map_view);
         mapView.onCreate(savedInstanceState);
 
-        mapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(@NonNull MapboxMap mapboxMap) {
-                map = mapboxMap;
-                map.setStyle(new Style.Builder().fromUri(MapirStyle.MAIN_MOBILE_VECTOR_STYLE), new Style.OnStyleLoaded() {
-                    @Override
-                    public void onStyleLoaded(@NonNull Style style) {
-                        mapStyle = style;
+        mapView.getMapAsync(mapboxMap -> {
+            map = mapboxMap;
 
-                        enableLocationComponent();
+            map.addOnCameraMoveStartedListener(MapirNavigationActivity.this);
 
-                        Gson gson = new Gson();
+            map.setStyle(new Style.Builder().fromUri(MapirStyle.MAIN_MOBILE_VECTOR_STYLE), style -> {
+                mapStyle = style;
 
-                        showRouteOnMap(
-                                gson.fromJson(getIntent().getExtras().getString("routeResponse"), RouteResponse.class).getRoutes().get(0).getGeometry()
-                        );
+                enableLocationComponent();
 
-                        MapirNavigationActivity.this.origin = gson.fromJson(getIntent().getExtras().getString("origin"), LatLng.class);
-                        MapirNavigationActivity.this.destination = gson.fromJson(getIntent().getExtras().getString("destination"), LatLng.class);
-                    }
-                });
-            }
+                Gson gson = new Gson();
+
+                showRouteOnMap(
+                        gson.fromJson(getIntent().getExtras().getString("routeResponse"), RouteResponse.class).getRoutes().get(0).getGeometry()
+                );
+
+                MapirNavigationActivity.this.origin = gson.fromJson(getIntent().getExtras().getString("origin"), LatLng.class);
+                MapirNavigationActivity.this.destination = gson.fromJson(getIntent().getExtras().getString("destination"), LatLng.class);
+            });
         });
 
         executeRouteRequest(new ResponseListener() {
@@ -158,7 +209,6 @@ public class MapirNavigationActivity extends AppCompatActivity {
     }
 
     void showRouteOnMap(String geometry) {
-        LineManager lineManager = new LineManager(mapView, map, mapStyle);
         LineString routeLine = LineString.fromPolyline(geometry, 5);
 
         List<Point> coordinates = new ArrayList<>();
@@ -257,7 +307,8 @@ public class MapirNavigationActivity extends AppCompatActivity {
     }
 
     private void startSimulation(List<Point> coordinates) {
-        locationComponent.setLocationComponentEnabled(false);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+            locationComponent.setLocationComponentEnabled(false);
 
         Timer timer = new Timer();
         timer.schedule(new FakeGps(coordinates), 0, 500);
@@ -285,6 +336,7 @@ public class MapirNavigationActivity extends AppCompatActivity {
             _point = points.get(0);
             points.remove(0);
             mainRouteLineString = LineString.fromLngLats(points);
+            origin = new LatLng(_point.latitude(), _point.longitude());
         }
 
         FeatureCollection routeLineMainFeatureCollection = FeatureCollection.fromFeature(Feature.fromGeometry(mainRouteLineString));
@@ -298,15 +350,57 @@ public class MapirNavigationActivity extends AppCompatActivity {
 
             // Add source to map
             GeoJsonSource locationSource = mapStyle.getSourceAs("location_symbol_source_id");
-            if (locationSource != null)
+            if (locationSource != null) {
+                if (changeRouteTracking) {
+                    changeRouteTracking = false;
+                    Layer locationSymbolLayer = mapStyle.getLayerAs("location_symbol_layer_id");
+                    CircleLayer locationCircleLayer = mapStyle.getLayerAs("location_circle_layer_id");
+                    if (locationSymbolLayer != null)
+                        if (routeTracking) {
+                            locationSymbolLayer.setProperties(
+                                    PropertyFactory.iconPitchAlignment(ICON_PITCH_ALIGNMENT_MAP),
+                                    PropertyFactory.iconImage("location_symbol_tracker_image_id")
+                            );
+                        } else
+                            locationSymbolLayer.setProperties(
+                                    PropertyFactory.iconPitchAlignment(Property.ICON_PITCH_ALIGNMENT_VIEWPORT),
+                                    PropertyFactory.iconImage("location_symbol_idle_image_id")
+                            );
+
+                    if (locationCircleLayer != null)
+                        if (routeTracking) {
+                            locationCircleLayer.setProperties(
+                                    PropertyFactory.circleRadius(
+                                            interpolate(
+                                                    exponential(3), zoom(),
+                                                    stop(1f, 0f),
+                                                    stop(20f, 42f)
+                                            )
+                                    )
+                            );
+                        } else
+                            locationCircleLayer.setProperties(
+                                    PropertyFactory.circleRadius(
+                                            interpolate(
+                                                    exponential(2), zoom(),
+                                                    stop(1f, 0f),
+                                                    stop(20f, 32f)
+                                            )
+                                    )
+                            );
+                }
+
                 locationSource.setGeoJson(featureCollection);
-            else {
+            } else {
                 GeoJsonSource geoJsonSource = new GeoJsonSource("location_symbol_source_id", featureCollection);
                 mapStyle.addSource(geoJsonSource);
 
                 // Add image to map
-                Bitmap icon = BitmapFactory.decodeResource(getResources(), R.mipmap.map_marker);
-                mapStyle.addImage("location_symbol_image_id", icon);
+                Bitmap iconTracker = BitmapFactory.decodeResource(getResources(), R.mipmap.map_marker);
+                mapStyle.addImage("location_symbol_tracker_image_id", iconTracker);
+
+                Bitmap iconIdle = BitmapFactory.decodeResource(getResources(), R.drawable.mapbox_marker_icon_default);
+                mapStyle.addImage("location_symbol_idle_image_id", iconIdle);
 
                 CircleLayer currentLocationCircleLayer = new CircleLayer("location_circle_layer_id", "location_symbol_source_id");
                 currentLocationCircleLayer.setProperties(
@@ -325,7 +419,7 @@ public class MapirNavigationActivity extends AppCompatActivity {
                 // Add layer to map
                 SymbolLayer symbolLayer = new SymbolLayer("location_symbol_layer_id", "location_symbol_source_id");
                 symbolLayer.setProperties(
-                        PropertyFactory.iconImage("location_symbol_image_id"),
+                        PropertyFactory.iconImage("location_symbol_tracker_image_id"),
                         PropertyFactory.iconSize(
                                 interpolate(
                                         exponential(1.5), zoom(),
@@ -364,7 +458,8 @@ public class MapirNavigationActivity extends AppCompatActivity {
             locationComponent.activateLocationComponent(locationComponentActivationOptions);
 
             // Enable to make component visible
-            locationComponent.setLocationComponentEnabled(true);
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+                locationComponent.setLocationComponentEnabled(true);
 
             // Set the component's camera mode
             locationComponent.setCameraMode(CameraMode.TRACKING_GPS_NORTH);
@@ -375,10 +470,7 @@ public class MapirNavigationActivity extends AppCompatActivity {
             initLocationEngine();
 
             // Add the location icon click listener
-            locationComponent.addOnLocationClickListener(new OnLocationClickListener() {
-                @Override
-                public void onLocationComponentClick() {
-                }
+            locationComponent.addOnLocationClickListener(() -> {
             });
         } else {
             PermissionsManager permissionsManager = new PermissionsManager(new PermissionsListener() {
@@ -405,6 +497,8 @@ public class MapirNavigationActivity extends AppCompatActivity {
     private void initLocationEngine() {
         locationEngine = LocationEngineProvider.getBestLocationEngine(this);
 
+        long DEFAULT_INTERVAL_IN_MILLISECONDS = 1000L;
+        long DEFAULT_MAX_WAIT_TIME = DEFAULT_INTERVAL_IN_MILLISECONDS * 5;
         LocationEngineRequest request = new LocationEngineRequest.Builder(DEFAULT_INTERVAL_IN_MILLISECONDS)
                 .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
                 .setMaxWaitTime(DEFAULT_MAX_WAIT_TIME).build();
@@ -469,8 +563,20 @@ public class MapirNavigationActivity extends AppCompatActivity {
         mapView.onSaveInstanceState(outState);
     }
 
+    @Override
+    public void onCameraMoveStarted(int reason) {
+        switch (reason) {
+            case 1:
+                routeTracking = false;
+                changeRouteTracking = true;
+                backToRouteLnl.setVisibility(View.VISIBLE);
+                break;
+            default:
+        }
+    }
+
     class FakeGps extends TimerTask {
-        private List<Point> coordinates;
+        private final List<Point> coordinates;
         private int index = 0;
 
         public FakeGps(List<Point> coordinates) {
@@ -478,38 +584,31 @@ public class MapirNavigationActivity extends AppCompatActivity {
         }
 
         public void run() {
-            Point currentLocation = coordinates.get(index);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    map.easeCamera(CameraUpdateFactory.bearingTo(TurfMeasurement.bearing(currentLocation, coordinates.get(index + 1))), new MapboxMap.CancelableCallback() {
-                        @Override
-                        public void onCancel() {
-                        }
+            if (routeTracking) {
+                Point currentLocation = coordinates.get(index);
+                runOnUiThread(() -> map.easeCamera(CameraUpdateFactory.bearingTo(TurfMeasurement.bearing(currentLocation, coordinates.get(index + 1))), new MapboxMap.CancelableCallback() {
+                    @Override
+                    public void onCancel() {
+                    }
 
-                        @Override
-                        public void onFinish() {
-                            addSymbolSourceAndLayerToMap();
-                            new Handler().postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    map.animateCamera(CameraUpdateFactory.newLatLng(new LatLng(currentLocation.latitude(), currentLocation.longitude())), new MapboxMap.CancelableCallback() {
-                                        @Override
-                                        public void onCancel() {
-                                        }
+                    @Override
+                    public void onFinish() {
+                        addSymbolSourceAndLayerToMap();
 
-                                        @Override
-                                        public void onFinish() {
-                                            if (index != coordinates.size() - 1)
-                                                index++;
-                                        }
-                                    });
-                                }
-                            }, 1);
-                        }
-                    });
-                }
-            });
+                        new Handler().postDelayed(() -> map.animateCamera(CameraUpdateFactory.newLatLng(new LatLng(currentLocation.latitude(), currentLocation.longitude())), new MapboxMap.CancelableCallback() {
+                            @Override
+                            public void onCancel() {
+                            }
+
+                            @Override
+                            public void onFinish() {
+                                if (index != coordinates.size() - 1)
+                                    index++;
+                            }
+                        }), 1);
+                    }
+                }));
+            } else runOnUiThread(MapirNavigationActivity.this::addSymbolSourceAndLayerToMap);
 
             if (index == coordinates.size() - 1)
                 this.cancel();
@@ -551,35 +650,25 @@ public class MapirNavigationActivity extends AppCompatActivity {
                     activity.bearing = TurfMeasurement.bearing(activity.secondLastPoint, activity.firstLastPoint);
 
                     Point currentLocation = activity.firstLastPoint;
-                    activity.runOnUiThread(new Runnable() {
+                    activity.runOnUiThread(() -> activity.map.easeCamera(CameraUpdateFactory.bearingTo(TurfMeasurement.bearing(activity.secondLastPoint, activity.firstLastPoint)), new MapboxMap.CancelableCallback() {
                         @Override
-                        public void run() {
-                            activity.map.easeCamera(CameraUpdateFactory.bearingTo(TurfMeasurement.bearing(activity.secondLastPoint, activity.firstLastPoint)), new MapboxMap.CancelableCallback() {
+                        public void onCancel() {
+                        }
+
+                        @Override
+                        public void onFinish() {
+                            activity.addSymbolSourceAndLayerToMap();
+                            new Handler().postDelayed(() -> activity.map.animateCamera(CameraUpdateFactory.newLatLng(new LatLng(currentLocation.latitude(), currentLocation.longitude())), new MapboxMap.CancelableCallback() {
                                 @Override
                                 public void onCancel() {
                                 }
 
                                 @Override
                                 public void onFinish() {
-                                    activity.addSymbolSourceAndLayerToMap();
-                                    new Handler().postDelayed(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            activity.map.animateCamera(CameraUpdateFactory.newLatLng(new LatLng(currentLocation.latitude(), currentLocation.longitude())), new MapboxMap.CancelableCallback() {
-                                                @Override
-                                                public void onCancel() {
-                                                }
-
-                                                @Override
-                                                public void onFinish() {
-                                                }
-                                            });
-                                        }
-                                    }, 1);
                                 }
-                            });
+                            }), 1);
                         }
-                    });
+                    }));
                 }
 
                 if (activity.map != null && result.getLastLocation() != null)
@@ -625,30 +714,22 @@ public class MapirNavigationActivity extends AppCompatActivity {
                 call.cancel();
 
                 new Handler(Looper.getMainLooper()).post(
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                listener.onError(new MapirError("Client Connection Error", 1000));
-                            }
-                        }
+                        () -> listener.onError(new MapirError("Client Connection Error", 1000))
                 );
             }
 
             @Override
             public void onResponse(Call call, final Response response) {
                 new Handler(Looper.getMainLooper()).post(
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                if (!response.isSuccessful())
-                                    listener.onError(createError(response.code(), "sound_route"));
-                                else {
-                                    try {
-                                        MapirResponse tempResponse = createResponse(response.body(), "sound_route");
-                                        listener.onSuccess(tempResponse);
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
+                        () -> {
+                            if (!response.isSuccessful())
+                                listener.onError(createError(response.code(), "sound_route"));
+                            else {
+                                try {
+                                    MapirResponse tempResponse = createResponse(response.body(), "sound_route");
+                                    listener.onSuccess(tempResponse);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
                                 }
                             }
                         }
