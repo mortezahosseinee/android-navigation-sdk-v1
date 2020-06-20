@@ -13,7 +13,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
-import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -22,6 +22,8 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.gson.Gson;
@@ -76,6 +78,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static android.widget.LinearLayout.VERTICAL;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.exponential;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.interpolate;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.stop;
@@ -116,8 +119,15 @@ public class MapirNavigationActivity extends AppCompatActivity implements Mapbox
     private AppCompatButton backToRouteBtn;
     private AppCompatImageView backToRouteImg;
 
-    private LinearLayout bottomSheet;
+    private LinearLayoutCompat bottomSheet;
     private BottomSheetBehavior bottomSheetBehavior;
+
+    private DirectionsAdapter mDirectionsAdapter;
+
+    private TextView durationTxv;
+    private TextView distanceTxv;
+
+    private RouteResponse routeResponse;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,16 +136,39 @@ public class MapirNavigationActivity extends AppCompatActivity implements Mapbox
 
         bottomSheet = findViewById(R.id.bottom_sheet_lnl);
         bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
-//        bottomSheetBehavior.get
+        ArrayList<String> mDirections = new ArrayList<>();
+        mDirections.add("سفر خوبی داشته باشید.");
+        mDirections.add("100 متر دیگر به راست بپیچید.");
+        mDirections.add("در میدان، از خروجی اول وارد کنگان شوید.");
+        mDirections.add("200 متر دیگر به مسیر خود ادامه دهید.");
+        mDirections.add("به مقصد رسیدید.");
+
+        // set up the RecyclerView
+        RecyclerView recyclerView = findViewById(R.id.directions_rcv);
+        mDirectionsAdapter = new DirectionsAdapter(this, mDirections);
+        mDirectionsAdapter.setTypeface(Typeface.createFromAsset(getAssets(), "iransans_fa.ttf"));
+        mDirectionsAdapter.setClickListener((view, position) -> {
+
+        });
+        recyclerView.setAdapter(mDirectionsAdapter);
+
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(), VERTICAL);
+        recyclerView.addItemDecoration(dividerItemDecoration);
+
+        distanceTxv = findViewById(R.id.distance_txv);
+        durationTxv = findViewById(R.id.duration_txv);
+
+        distanceTxv.setTypeface(Typeface.createFromAsset(getAssets(), "iransans_fa.ttf"));
+        durationTxv.setTypeface(Typeface.createFromAsset(getAssets(), "iransans_fa.ttf"));
 
         backToRouteLnl = findViewById(R.id.back_to_route_lnl);
         backToRouteBtn = findViewById(R.id.back_to_route_btn);
         backToRouteImg = findViewById(R.id.back_to_route_img);
 
         backToRouteBtn.setTypeface(Typeface.createFromAsset(getAssets(), "iransans_fa.ttf"));
-        backToRouteLnl.setOnClickListener(v -> map.animateCamera(CameraUpdateFactory.newLatLngZoom(origin, 20), 2500, new MapboxMap.CancelableCallback() {
+        backToRouteLnl.setOnClickListener(v -> map.animateCamera(CameraUpdateFactory.newLatLngZoom(origin, 20), 1500, new MapboxMap.CancelableCallback() {
             @Override
             public void onCancel() {
             }
@@ -147,7 +180,7 @@ public class MapirNavigationActivity extends AppCompatActivity implements Mapbox
                 backToRouteLnl.setVisibility(View.GONE);
             }
         }));
-        backToRouteBtn.setOnClickListener(v -> map.animateCamera(CameraUpdateFactory.newLatLngZoom(origin, 20), 2500, new MapboxMap.CancelableCallback() {
+        backToRouteBtn.setOnClickListener(v -> map.animateCamera(CameraUpdateFactory.newLatLngZoom(origin, 20), 1500, new MapboxMap.CancelableCallback() {
             @Override
             public void onCancel() {
             }
@@ -159,7 +192,7 @@ public class MapirNavigationActivity extends AppCompatActivity implements Mapbox
                 backToRouteLnl.setVisibility(View.GONE);
             }
         }));
-        backToRouteImg.setOnClickListener(v -> map.animateCamera(CameraUpdateFactory.newLatLngZoom(origin, 20), 2500, new MapboxMap.CancelableCallback() {
+        backToRouteImg.setOnClickListener(v -> map.animateCamera(CameraUpdateFactory.newLatLngZoom(origin, 20), 1500, new MapboxMap.CancelableCallback() {
             @Override
             public void onCancel() {
             }
@@ -197,8 +230,12 @@ public class MapirNavigationActivity extends AppCompatActivity implements Mapbox
 
                 Gson gson = new Gson();
 
+                routeResponse = gson.fromJson(getIntent().getExtras().getString("routeResponse"), RouteResponse.class);
+                distanceTxv.setText(routeResponse.getRoutes().get(0).getDistance() + " متر");
+                durationTxv.setText(routeResponse.getRoutes().get(0).getDuration() + " دقیقه");
+
                 showRouteOnMap(
-                        gson.fromJson(getIntent().getExtras().getString("routeResponse"), RouteResponse.class).getRoutes().get(0).getGeometry()
+                        routeResponse.getRoutes().get(0).getGeometry()
                 );
 
                 MapirNavigationActivity.this.origin = gson.fromJson(getIntent().getExtras().getString("origin"), LatLng.class);
