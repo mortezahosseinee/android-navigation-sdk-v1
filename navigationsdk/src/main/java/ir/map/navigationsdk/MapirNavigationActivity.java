@@ -67,6 +67,10 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static com.mapbox.mapboxsdk.style.expressions.Expression.exponential;
+import static com.mapbox.mapboxsdk.style.expressions.Expression.interpolate;
+import static com.mapbox.mapboxsdk.style.expressions.Expression.stop;
+import static com.mapbox.mapboxsdk.style.expressions.Expression.zoom;
 import static com.mapbox.mapboxsdk.style.layers.Property.CIRCLE_PITCH_ALIGNMENT_MAP;
 import static com.mapbox.mapboxsdk.style.layers.Property.ICON_PITCH_ALIGNMENT_MAP;
 import static com.mapbox.mapboxsdk.style.layers.Property.LINE_JOIN_ROUND;
@@ -181,7 +185,13 @@ public class MapirNavigationActivity extends AppCompatActivity {
         // Add layer to map
         LineLayer belowLineLayer = new LineLayer("route_line_below_layer_id", "route_line_below_source_id");
         belowLineLayer.setProperties(
-                PropertyFactory.lineWidth(32f),
+                PropertyFactory.lineWidth(
+                        interpolate(
+                                exponential(3), zoom(),
+                                stop(1f, 0f),
+                                stop(20f, 32f)
+                        )
+                ),
                 PropertyFactory.lineColor("#66b2ff"),
                 PropertyFactory.lineOpacity(0.4f),
                 PropertyFactory.lineJoin(LINE_JOIN_ROUND)
@@ -190,8 +200,18 @@ public class MapirNavigationActivity extends AppCompatActivity {
 
         LineLayer shadowLineLayer = new LineLayer("route_line_shadow_layer_id", "route_line_source_id");
         shadowLineLayer.setProperties(
-                PropertyFactory.lineWidth(2f),
-                PropertyFactory.lineGapWidth(32f),
+                PropertyFactory.lineWidth(interpolate(
+                        exponential(1.5), zoom(),
+                        stop(1f, 0f),
+                        stop(20f, 2f)
+                )),
+                PropertyFactory.lineGapWidth(
+                        interpolate(
+                                exponential(1.5), zoom(),
+                                stop(1f, 5f),
+                                stop(20f, 32f)
+                        )
+                ),
                 PropertyFactory.lineColor("#000"),
                 PropertyFactory.lineJoin(LINE_JOIN_ROUND)
         );
@@ -199,7 +219,13 @@ public class MapirNavigationActivity extends AppCompatActivity {
 
         LineLayer lineLayer = new LineLayer("route_line_layer_id", "route_line_source_id");
         lineLayer.setProperties(
-                PropertyFactory.lineWidth(32f),
+                PropertyFactory.lineWidth(
+                        interpolate(
+                                exponential(1.5), zoom(),
+                                stop(1f, 5f),
+                                stop(20f, 32f)
+                        )
+                ),
                 PropertyFactory.lineColor("#66b2ff"),
                 PropertyFactory.lineOpacity(0.8f),
                 PropertyFactory.lineJoin(LINE_JOIN_ROUND)
@@ -208,7 +234,7 @@ public class MapirNavigationActivity extends AppCompatActivity {
 
         origin = new LatLng(routeLine.coordinates().get(0).latitude(), routeLine.coordinates().get(0).longitude());
 
-        map.easeCamera(CameraUpdateFactory.newLatLngZoom(origin, 22), 100, new MapboxMap.CancelableCallback() {
+        map.easeCamera(CameraUpdateFactory.newLatLngZoom(origin, 20), 100, new MapboxMap.CancelableCallback() {
             @Override
             public void onCancel() {
             }
@@ -285,7 +311,13 @@ public class MapirNavigationActivity extends AppCompatActivity {
                 CircleLayer currentLocationCircleLayer = new CircleLayer("location_circle_layer_id", "location_symbol_source_id");
                 currentLocationCircleLayer.setProperties(
                         PropertyFactory.circleColor("#a0a0a0"),
-                        PropertyFactory.circleRadius(42f),
+                        PropertyFactory.circleRadius(
+                                interpolate(
+                                        exponential(3), zoom(),
+                                        stop(1f, 0f),
+                                        stop(20f, 42f)
+                                )
+                        ),
                         PropertyFactory.circlePitchAlignment(CIRCLE_PITCH_ALIGNMENT_MAP)
                 );
                 mapStyle.addLayer(currentLocationCircleLayer);
@@ -294,7 +326,13 @@ public class MapirNavigationActivity extends AppCompatActivity {
                 SymbolLayer symbolLayer = new SymbolLayer("location_symbol_layer_id", "location_symbol_source_id");
                 symbolLayer.setProperties(
                         PropertyFactory.iconImage("location_symbol_image_id"),
-                        PropertyFactory.iconSize(1.5f),
+                        PropertyFactory.iconSize(
+                                interpolate(
+                                        exponential(1.5), zoom(),
+                                        stop(1f, 0.3f),
+                                        stop(20f, 1.5f)
+                                )
+                        ),
                         PropertyFactory.iconPitchAlignment(ICON_PITCH_ALIGNMENT_MAP)
                 );
                 mapStyle.addLayer(symbolLayer);
