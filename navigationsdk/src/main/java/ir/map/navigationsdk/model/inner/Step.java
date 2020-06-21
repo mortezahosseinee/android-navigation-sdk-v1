@@ -5,6 +5,8 @@ import java.util.List;
 public class Step {
 
     private List<Intersection> intersections;
+    private List<BannerInstruction> bannerInstructions;
+    private List<VoiceInstruction> voiceInstructions;
     private String drivingSide;
     private String geometry;
     private String mode;
@@ -16,6 +18,20 @@ public class Step {
 
     public Step(List<Intersection> intersections, String drivingSide, String geometry, String mode, Integer duration, Maneuver maneuver, Integer weight, Integer distance, String name) {
         this.intersections = intersections;
+        this.drivingSide = drivingSide;
+        this.geometry = geometry;
+        this.mode = mode;
+        this.duration = duration;
+        this.maneuver = maneuver;
+        this.weight = weight;
+        this.distance = distance;
+        this.name = name;
+    }
+
+    public Step(List<Intersection> intersections, List<BannerInstruction> bannerInstructions, List<VoiceInstruction> voiceInstructions, String drivingSide, String geometry, String mode, Integer duration, Maneuver maneuver, Integer weight, Integer distance, String name) {
+        this.intersections = intersections;
+        this.bannerInstructions = bannerInstructions;
+        this.voiceInstructions = voiceInstructions;
         this.drivingSide = drivingSide;
         this.geometry = geometry;
         this.mode = mode;
@@ -60,5 +76,21 @@ public class Step {
 
     public String getName() {
         return name;
+    }
+
+    public List<BannerInstruction> getBannerInstructions() {
+        return bannerInstructions;
+    }
+
+    public void setBannerInstructions(List<BannerInstruction> bannerInstructions) {
+        this.bannerInstructions = bannerInstructions;
+    }
+
+    public List<VoiceInstruction> getVoiceInstructions() {
+        return voiceInstructions;
+    }
+
+    public void setVoiceInstructions(List<VoiceInstruction> voiceInstructions) {
+        this.voiceInstructions = voiceInstructions;
     }
 }

@@ -60,20 +60,27 @@ import com.mapbox.turf.TurfMeasurement;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import ir.map.navigationsdk.model.Direction;
 import ir.map.navigationsdk.model.RouteResponse;
 import ir.map.navigationsdk.model.base.MapirError;
 import ir.map.navigationsdk.model.base.MapirResponse;
 import ir.map.navigationsdk.model.enums.RouteOverView;
 import ir.map.navigationsdk.model.enums.RouteType;
+import ir.map.navigationsdk.model.inner.Leg;
+import ir.map.navigationsdk.model.inner.RouteItem;
+import ir.map.navigationsdk.model.inner.Step;
+import ir.map.navigationsdk.model.inner.VoiceInstruction;
 import ir.map.sdk_map.MapirStyle;
 import ir.map.sdk_map.maps.MapView;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -89,6 +96,7 @@ import static com.mapbox.mapboxsdk.style.layers.Property.LINE_JOIN_ROUND;
 import static com.mapbox.turf.TurfConstants.UNIT_METRES;
 import static ir.map.navigationsdk.HttpUtils.createError;
 import static ir.map.navigationsdk.HttpUtils.createResponse;
+import static ir.map.navigationsdk.UrlBuilder.SOUND_ROUTE;
 
 public class MapirNavigationActivity extends AppCompatActivity implements MapboxMap.OnCameraMoveStartedListener {
 
@@ -121,6 +129,7 @@ public class MapirNavigationActivity extends AppCompatActivity implements Mapbox
 
     private LinearLayoutCompat bottomSheet;
     private BottomSheetBehavior bottomSheetBehavior;
+    private RecyclerView directionsRecyclerView;
 
     private DirectionsAdapter mDirectionsAdapter;
 
@@ -134,28 +143,29 @@ public class MapirNavigationActivity extends AppCompatActivity implements Mapbox
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mapir_navigation);
 
+        try {
+            this.getSupportActionBar().hide();
+        } catch (NullPointerException e) {
+        }
+
+        try {
+            getActionBar().hide();
+        } catch (NullPointerException e) {
+        }
+
         bottomSheet = findViewById(R.id.bottom_sheet_lnl);
         bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-        ArrayList<String> mDirections = new ArrayList<>();
-        mDirections.add("سفر خوبی داشته باشید.");
-        mDirections.add("100 متر دیگر به راست بپیچید.");
-        mDirections.add("در میدان، از خروجی اول وارد کنگان شوید.");
-        mDirections.add("200 متر دیگر به مسیر خود ادامه دهید.");
-        mDirections.add("به مقصد رسیدید.");
-
-        // set up the RecyclerView
-        RecyclerView recyclerView = findViewById(R.id.directions_rcv);
-        mDirectionsAdapter = new DirectionsAdapter(this, mDirections);
+        directionsRecyclerView = findViewById(R.id.directions_rcv);
+        mDirectionsAdapter = new DirectionsAdapter(MapirNavigationActivity.this, new ArrayList<>());
         mDirectionsAdapter.setTypeface(Typeface.createFromAsset(getAssets(), "iransans_fa.ttf"));
         mDirectionsAdapter.setClickListener((view, position) -> {
 
         });
-        recyclerView.setAdapter(mDirectionsAdapter);
 
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(), VERTICAL);
-        recyclerView.addItemDecoration(dividerItemDecoration);
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(directionsRecyclerView.getContext(), VERTICAL);
+        directionsRecyclerView.addItemDecoration(dividerItemDecoration);
 
         distanceTxv = findViewById(R.id.distance_txv);
         durationTxv = findViewById(R.id.duration_txv);
@@ -205,16 +215,6 @@ public class MapirNavigationActivity extends AppCompatActivity implements Mapbox
             }
         }));
 
-        try {
-            this.getSupportActionBar().hide();
-        } catch (NullPointerException e) {
-        }
-
-        try {
-            getActionBar().hide();
-        } catch (NullPointerException e) {
-        }
-
         mapView = findViewById(R.id.map_view);
         mapView.onCreate(savedInstanceState);
 
@@ -231,8 +231,6 @@ public class MapirNavigationActivity extends AppCompatActivity implements Mapbox
                 Gson gson = new Gson();
 
                 routeResponse = gson.fromJson(getIntent().getExtras().getString("routeResponse"), RouteResponse.class);
-                distanceTxv.setText(routeResponse.getRoutes().get(0).getDistance() + " متر");
-                durationTxv.setText(routeResponse.getRoutes().get(0).getDuration() + " دقیقه");
 
                 showRouteOnMap(
                         routeResponse.getRoutes().get(0).getGeometry()
@@ -240,20 +238,91 @@ public class MapirNavigationActivity extends AppCompatActivity implements Mapbox
 
                 MapirNavigationActivity.this.origin = gson.fromJson(getIntent().getExtras().getString("origin"), LatLng.class);
                 MapirNavigationActivity.this.destination = gson.fromJson(getIntent().getExtras().getString("destination"), LatLng.class);
+
+                getSoundRoute();
             });
         });
+    }
 
-        executeRouteRequest(new ResponseListener() {
+    private void getSoundRoute() {
+        RouteRequest requestBody = new RouteRequest.Builder(
+                origin.getLatitude(), origin.getLongitude(),
+                destination.getLatitude(), destination.getLongitude(),
+                RouteType.DRIVING
+        )
+                .steps(true)
+                .routeOverView(RouteOverView.FULL)
+                .build();
+
+        executeSoundRouteRequest(new ResponseListener() {
             @Override
             public void onSuccess(Object response) {
+                RouteResponse routeResponse = (RouteResponse) response;
+                RouteItem routeItem = routeResponse.getRoutes().get(0);
 
+                double kilometer = routeResponse.getRoutes().get(0).getDistance() / 1000;
+                int meter = (int) (routeResponse.getRoutes().get(0).getDistance() % 1000);
+
+                if (kilometer < 0.2)
+                    distanceTxv.setText(String.format("%s متر", new DecimalFormat("#").format(meter)));
+                else
+                    distanceTxv.setText(String.format("%s ک.م", new DecimalFormat("#.#").format(kilometer)));
+
+                double hour = routeResponse.getRoutes().get(0).getDuration() / 3600;
+                int minute = (int) (routeResponse.getRoutes().get(0).getDuration() / 60);
+
+                if (hour >= 1)
+                    durationTxv.setText(String.format("%s ساعت", new DecimalFormat("#.#").format(hour)));
+                else
+                    durationTxv.setText(String.format("%s دقیقه", new DecimalFormat("#").format(minute)));
+
+                ArrayList<Direction> mDirections = new ArrayList<>();
+                List<Leg> legs = routeItem.getLegs();
+                String lastStepName = "";
+
+                for (int i = 0; i < legs.size(); i++) {
+                    List<Step> steps = legs.get(i).getSteps();
+                    String name;
+                    String to;
+                    String order;
+                    String order_type;
+                    List<String> instructions = new ArrayList<>();
+
+                    for (Step step : steps) {
+                        for (VoiceInstruction voiceInstruction : step.getVoiceInstructions())
+                            instructions.add(voiceInstruction.getAnnouncement());
+
+                        name = step.getName();
+
+                        if (name.isEmpty())
+                            name = lastStepName;
+                        else
+                            lastStepName = name;
+
+                        if (step.getBannerInstructions().isEmpty())
+                            to = "مقصد";
+                        else
+                            to = step.getBannerInstructions().get(0).getPrimary().getText();
+
+                        order = step.getManeuver().getInstruction().replace("$", " ").replace("&", " ");
+                        order_type = step.getManeuver().getType();
+
+                        mDirections.add(new Direction(name, to, order, order_type, instructions));
+                    }
+                }
+
+                mDirections.remove(mDirections.size() - 1);
+                mDirectionsAdapter.setDirections(mDirections);
+                directionsRecyclerView.setAdapter(mDirectionsAdapter);
+
+                bottomSheetBehavior.setHideable(false);
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }
 
             @Override
             public void onError(MapirError error) {
-
             }
-        });
+        }, UrlBuilder.soundRouteUrl(requestBody));
     }
 
     void showRouteOnMap(String geometry) {
@@ -346,7 +415,7 @@ public class MapirNavigationActivity extends AppCompatActivity implements Mapbox
 
                     @Override
                     public void onFinish() {
-                        startSimulation(coordinates);
+//                        startSimulation(coordinates);
 //                        map.animateCamera(CameraUpdateFactory.bearingTo(180));
                     }
                 });
@@ -740,18 +809,10 @@ public class MapirNavigationActivity extends AppCompatActivity implements Mapbox
         }
     }
 
-    private void executeRouteRequest(final ResponseListener listener) {
-        RouteRequest requestBody = new RouteRequest.Builder(
-                35.732483, 51.422414,
-                35.722580, 51.451678,
-                RouteType.DRIVING
-        )
-                .routeOverView(RouteOverView.FULL)
-                .build();
-
+    private void executeSoundRouteRequest(final ResponseListener listener, HttpUrl.Builder urlBuilder) {
         client.newCall(
                 new Request.Builder()
-                        .url(UrlBuilder.routeUrl(requestBody).build().toString())
+                        .url(urlBuilder.build().toString())
                         .addHeader("x-api-key", MapirNavigation.getApiKey())
                         .addHeader("MapIr-SDK", MapirNavigation.getUserAgent())
                         .get()
@@ -771,10 +832,10 @@ public class MapirNavigationActivity extends AppCompatActivity implements Mapbox
                 new Handler(Looper.getMainLooper()).post(
                         () -> {
                             if (!response.isSuccessful())
-                                listener.onError(createError(response.code(), "sound_route"));
+                                listener.onError(createError(response.code(), SOUND_ROUTE));
                             else {
                                 try {
-                                    MapirResponse tempResponse = createResponse(response.body(), "sound_route");
+                                    MapirResponse tempResponse = createResponse(response.body(), SOUND_ROUTE);
                                     listener.onSuccess(tempResponse);
                                 } catch (IOException e) {
                                     e.printStackTrace();

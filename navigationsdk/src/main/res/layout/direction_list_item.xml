@@ -5,32 +5,45 @@
     android:layout_height="wrap_content">
 
     <TextView
-        android:id="@+id/direction_txv"
+        android:id="@+id/name_txv"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:gravity="start"
+        android:text="شهید صیاد شیرازی"
+        android:textColor="#373737"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/direction_img"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/direction_img"
+        app:layout_constraintTop_toTopOf="@+id/direction_img" />
+
+    <TextView
+        android:id="@+id/order_txv"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
         android:layout_marginBottom="8dp"
         android:gravity="start"
         android:text="100 متر دیگر به سمت راست بپیچید."
         android:textColor="#373737"
-        android:textSize="24sp"
-        android:textStyle="bold"
+        android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="@+id/name_txv"
+        app:layout_constraintStart_toStartOf="@+id/direction_img"
+        app:layout_constraintTop_toBottomOf="@+id/name_txv" />
 
-    <!--    <View-->
-    <!--        android:id="@+id/divider_view"-->
-    <!--        android:layout_width="0dp"-->
-    <!--        android:layout_height="1dp"-->
-    <!--        android:layout_marginStart="32dp"-->
-    <!--        android:layout_marginTop="8dp"-->
-    <!--        android:layout_marginEnd="32dp"-->
-    <!--        android:background="@drawable/gradient_vertical"-->
-    <!--        app:layout_constraintBottom_toBottomOf="parent"-->
-    <!--        app:layout_constraintEnd_toEndOf="parent"-->
-    <!--        app:layout_constraintStart_toStartOf="parent"-->
-    <!--        app:layout_constraintTop_toBottomOf="@+id/direction_txv" />-->
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/direction_img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/mapir_marker_icon_default" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

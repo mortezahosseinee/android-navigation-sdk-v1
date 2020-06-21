@@ -38,6 +38,8 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center"
+                android:paddingStart="8dp"
+                android:paddingLeft="8dp"
                 android:paddingTop="4dp"
                 android:paddingEnd="8dp"
                 android:paddingRight="8dp"
@@ -54,7 +56,7 @@
                     android:layout_marginLeft="16dp"
                     android:layout_marginEnd="8dp"
                     android:layout_marginRight="8dp"
-                    android:src="@drawable/ic_navigation" />
+                    app:srcCompat="@drawable/ic_navigation" />
 
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/back_to_route_btn"
@@ -63,7 +65,7 @@
                     android:layout_marginEnd="8dp"
                     android:layout_marginRight="8dp"
                     android:background="#00000000"
-                    android:text="بازگشت به مسیر"
+                    android:text="@string/return_to_route"
                     android:textColor="#fff"
                     android:textSize="18sp" />
 
@@ -77,8 +79,8 @@
             android:layout_height="wrap_content"
             android:background="@drawable/bottom_sheet_background"
             android:orientation="vertical"
-            app:behavior_hideable="false"
-            app:behavior_peekHeight="120dp"
+            app:behavior_hideable="true"
+            app:behavior_peekHeight="142dp"
             app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
             <androidx.core.widget.NestedScrollView
@@ -100,21 +102,21 @@
                         android:id="@+id/distance_txv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="10.2 ک.م"
                         android:textColor="#fff"
                         android:textSize="20sp"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:text="10.2 ک.م" />
 
                     <TextView
                         android:id="@+id/duration_txv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="37 دقیقه"
                         android:textColor="#fff"
                         android:textSize="20sp"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:text="37 دقیقه" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/directions_rcv"

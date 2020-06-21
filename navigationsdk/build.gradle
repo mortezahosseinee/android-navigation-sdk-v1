@@ -38,6 +38,8 @@ android {
         multiDexEnabled true
 
         buildConfigField "String", "MAPIR_NAVIGATION_SDK_VERSION", String.format("\"%s\"", libraryVersion)
+
+        vectorDrawables.useSupportLibrary = true
     }
 
     buildTypes {

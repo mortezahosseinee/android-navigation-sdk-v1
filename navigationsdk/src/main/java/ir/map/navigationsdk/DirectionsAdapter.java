@@ -9,51 +9,62 @@ import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import ir.map.navigationsdk.model.Direction;
 
 public class DirectionsAdapter extends RecyclerView.Adapter<DirectionsAdapter.ViewHolder> {
 
-    private List<String> mData;
+    private List<Direction> mDirections;
     private LayoutInflater mInflater;
     private ItemClickListener mClickListener;
     private Typeface mTypeface;
 
-    // data is passed into the constructor
-    DirectionsAdapter(Context context, List<String> data) {
+    DirectionsAdapter(Context context, List<Direction> mDirections) {
         this.mInflater = LayoutInflater.from(context);
-        this.mData = data;
+        this.mDirections = mDirections;
     }
 
-    // inflates the row layout from xml when needed
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = mInflater.inflate(R.layout.direction_list_item, parent, false);
         return new ViewHolder(view);
     }
 
-    // binds the data to the TextView in each row
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        String animal = mData.get(position);
-        holder.myTextView.setText(animal);
+        Direction direction = mDirections.get(position);
+
+        holder.nameTxv.setText(direction.getName());
+
+        if (direction.getTo().isEmpty() || isLastDirections(position))
+            holder.orderTxv.setText(direction.getOrder() + ".");
+        else
+            holder.orderTxv.setText(direction.getOrder().replace(".", "") + " و وارد " + direction.getTo() + " شوید.");
     }
 
-    // total number of rows
     @Override
     public int getItemCount() {
-        return mData.size();
+        return mDirections.size();
     }
 
+    public void setDirections(ArrayList<Direction> mDirections) {
+        this.mDirections = mDirections;
+    }
 
-    // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        TextView myTextView;
+        TextView nameTxv;
+        TextView orderTxv;
 
         ViewHolder(View itemView) {
             super(itemView);
-            myTextView = itemView.findViewById(R.id.direction_txv);
 
-            myTextView.setTypeface(mTypeface);
+            nameTxv = itemView.findViewById(R.id.name_txv);
+            orderTxv = itemView.findViewById(R.id.order_txv);
+
+            nameTxv.setTypeface(mTypeface);
+            orderTxv.setTypeface(mTypeface);
 
             itemView.setOnClickListener(this);
         }
@@ -64,22 +75,19 @@ public class DirectionsAdapter extends RecyclerView.Adapter<DirectionsAdapter.Vi
         }
     }
 
-    // convenience method for getting data at click position
-    String getItem(int id) {
-        return mData.get(id);
-    }
-
-    // allows clicks events to be caught
     void setClickListener(ItemClickListener itemClickListener) {
         this.mClickListener = itemClickListener;
     }
 
-    // parent activity will implement this method to respond to click events
     public interface ItemClickListener {
         void onItemClick(View view, int position);
     }
 
     public void setTypeface(Typeface mTypeface) {
         this.mTypeface = mTypeface;
+    }
+
+    private boolean isLastDirections(int position) {
+        return  (position == getItemCount() - 1 || position == getItemCount() - 2);
     }
 }

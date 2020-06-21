@@ -9,13 +9,15 @@ public class Maneuver {
     private Integer bearingBefore;
     private String type;
     private String modifier;
+    private String instruction;
 
-    public Maneuver(Integer bearingAfter, List<Double> location, Integer bearingBefore, String type, String modifier) {
+    public Maneuver(Integer bearingAfter, List<Double> location, Integer bearingBefore, String type, String modifier, String instruction) {
         this.bearingAfter = bearingAfter;
         this.location = location;
         this.bearingBefore = bearingBefore;
         this.type = type;
         this.modifier = modifier;
+        this.instruction = instruction;
     }
 
     public Integer getBearingAfter() {
@@ -36,5 +38,13 @@ public class Maneuver {
 
     public String getModifier() {
         return modifier;
+    }
+
+    public String getInstruction() {
+        return instruction;
+    }
+
+    public void setInstruction(String instruction) {
+        this.instruction = instruction;
     }
 }

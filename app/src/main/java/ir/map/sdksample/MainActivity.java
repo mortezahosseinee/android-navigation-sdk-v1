@@ -22,11 +22,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mapNavigation.setOrigin(35.740312, 51.422625);
+        mapNavigation.setOrigin(35.732541, 51.422680);
         mapNavigation.setDestination(35.722580, 51.451678);
 
         RouteRequest requestBody = new RouteRequest.Builder(
-                35.732483, 51.422414,
+                35.732541, 51.422680,
                 35.722580, 51.451678,
                 RouteType.DRIVING
         )

@@ -82,10 +82,10 @@ public class MapNavigation {
      * @param listener    This is callback we use to return response
      */
     public void route(RouteRequest requestBody, ResponseListener<RouteResponse> listener) {
-        execute(listener, UrlBuilder.routeUrl(requestBody), ROUTE);
+        execute(listener, UrlBuilder.routeUrl(requestBody));
     }
 
-    private void execute(final ResponseListener listener, HttpUrl.Builder urlBuilder, final String api) {
+    private void execute(final ResponseListener listener, HttpUrl.Builder urlBuilder) {
         client.newCall(
                 new Request.Builder()
                         .url(urlBuilder.build().toString())
@@ -99,30 +99,22 @@ public class MapNavigation {
                 call.cancel();
 
                 new Handler(Looper.getMainLooper()).post(
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                listener.onError(new MapirError("Client Connection Error", 1000));
-                            }
-                        }
+                        () -> listener.onError(new MapirError("Client Connection Error", 1000))
                 );
             }
 
             @Override
             public void onResponse(Call call, final Response response) {
                 new Handler(Looper.getMainLooper()).post(
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                if (!response.isSuccessful())
-                                    listener.onError(createError(response.code(), api));
-                                else {
-                                    try {
-                                        MapirResponse tempResponse = createResponse(response.body(), api);
-                                        listener.onSuccess(tempResponse);
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
+                        () -> {
+                            if (!response.isSuccessful())
+                                listener.onError(createError(response.code(), ROUTE));
+                            else {
+                                try {
+                                    MapirResponse tempResponse = createResponse(response.body(), ROUTE);
+                                    listener.onSuccess(tempResponse);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
                                 }
                             }
                         }

@@ -7,13 +7,17 @@ import ir.map.navigationsdk.model.base.MapirResponse;
 import okhttp3.ResponseBody;
 
 import static ir.map.navigationsdk.UrlBuilder.ROUTE;
+import static ir.map.navigationsdk.UrlBuilder.SOUND_ROUTE;
 import static ir.map.navigationsdk.model.RouteResponse.createRouteResponse;
+import static ir.map.navigationsdk.model.RouteResponse.createSoundRouteResponse;
 
 public class HttpUtils {
     static MapirResponse createResponse(ResponseBody body, String api) throws IOException {
         switch (api) {
             case ROUTE:
                 return createRouteResponse(body.string());
+            case SOUND_ROUTE:
+                return createSoundRouteResponse(body.string());
         }
 
         return null;
